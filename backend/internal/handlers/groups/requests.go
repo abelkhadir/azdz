@@ -19,11 +19,7 @@ type groupRequestInput struct {
 	UserID int64  `json:"userId"`
 }
 
-func (h Handler) Requests(w http.ResponseWriter, r *http.Request, userID string) {
-	currentUserID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) Requests(w http.ResponseWriter, r *http.Request, currentUserID int64) {
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", "GET")
 		response.WriteError(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -69,11 +65,7 @@ func (h Handler) Requests(w http.ResponseWriter, r *http.Request, userID string)
 	response.WriteJSON(w, http.StatusOK, map[string]any{"requests": requests})
 }
 
-func (h Handler) CreateRequest(w http.ResponseWriter, r *http.Request, userID string) {
-	currentUserID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) CreateRequest(w http.ResponseWriter, r *http.Request, currentUserID int64) {
 	groupID, ok := parseGroupID(w, r)
 	if !ok {
 		return
@@ -214,11 +206,7 @@ func (h Handler) CreateRequest(w http.ResponseWriter, r *http.Request, userID st
 	}})
 }
 
-func (h Handler) DecideRequest(w http.ResponseWriter, r *http.Request, userID string) {
-	currentUserID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) DecideRequest(w http.ResponseWriter, r *http.Request, currentUserID int64) {
 	if r.Method != http.MethodPatch {
 		w.Header().Set("Allow", "PATCH")
 		response.WriteError(w, "Method not allowed", http.StatusMethodNotAllowed)

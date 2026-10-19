@@ -10,7 +10,7 @@ import { usePagedList } from '@/lib/usePagedList'
 import type { Notification as Note, User } from '@/lib/types'
 import Avatar from './Avatar'
 
-const links = [['/', 'Home'], ['/people', 'People'], ['/groups', 'Groups'], ['/chat', 'Chat'], ['/profile', 'Profile']]
+const links = [['/feed', 'Home'], ['/people', 'People'], ['/groups', 'Groups'], ['/chat', 'Chat'], ['/profile', 'Profile']]
 type NotificationResponse = { notifications?: unknown[]; totalUnread?: number }
 const readNotifications = (value: unknown) => ((value as NotificationResponse).notifications || []).map(notification)
 
@@ -70,13 +70,13 @@ export default function Shell({ children }: { children: ReactNode }) {
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <Link href="/" className="brand"><span className="brand-mark">c</span><b>circle</b></Link>
+      <Link href="/feed" className="brand"><span className="brand-mark">c</span><b>circle</b></Link>
       <nav>{links.map(([href, label]) => <Link href={href} key={href}>{label}</Link>)}</nav>
       <div className="side-profile"><Avatar user={data.me} /><div><b>{data.me.first_name} {data.me.last_name}</b><small>@{data.me.nickname || data.me.first_name.toLowerCase()}</small></div></div>
     </aside>
     <section className="main-wrap">
       <header className="topbar">
-        <Link href="/" className="mobile-brand">circle</Link>
+        <Link href="/feed" className="mobile-brand">circle</Link>
         <div className="top-actions"><button className="icon-button" onClick={toggleNotifications} aria-label="Notifications">●{data.unread > 0 && <em>{data.unread}</em>}</button><button className="quiet" onClick={logout}>Log out</button></div>
         {open && <div className="notification-panel">
           <h3>Notifications</h3>

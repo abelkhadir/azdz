@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strconv"
 
 	"social-network/internal/models"
 	"social-network/internal/pkg/repo"
@@ -13,7 +12,7 @@ import (
 	"social-network/internal/websocket"
 )
 
-func (h Handler) Follow(w http.ResponseWriter, r *http.Request, userID string) {
+func (h Handler) Follow(w http.ResponseWriter, r *http.Request, userID int64) {
 	if r.Method != http.MethodPut && r.Method != http.MethodDelete {
 		response.WriteError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -22,7 +21,7 @@ func (h Handler) Follow(w http.ResponseWriter, r *http.Request, userID string) {
 	if !ok {
 		return
 	}
-	if strconv.FormatInt(id, 10) == userID {
+	if id == userID {
 		response.WriteError(w, "You cannot follow yourself", http.StatusBadRequest)
 		return
 	}
@@ -52,9 +51,8 @@ func (h Handler) Follow(w http.ResponseWriter, r *http.Request, userID string) {
 				SELECT ?, id, CASE WHEN is_public = 1 THEN 'accepted' ELSE 'pending' END
 				FROM users WHERE id = ? RETURNING id, status`, userID, id).Scan(&followID, &status)
 			if err == nil {
-				actorID, _ := strconv.ParseInt(userID, 10, 64)
 				created := models.Notification{
-					UserID: id, ActorID: actorID, Type: models.NotificationFollowRequest,
+					UserID: id, ActorID: userID, Type: models.NotificationFollowRequest,
 					EntityID: followID, EntityType: "follow", Content: "Someone wants to follow you.",
 				}
 				if status == "accepted" {

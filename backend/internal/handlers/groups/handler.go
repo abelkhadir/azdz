@@ -32,11 +32,7 @@ type groupInput struct {
 	Description string `json:"description"`
 }
 
-func (h Handler) Collection(w http.ResponseWriter, r *http.Request, userID string) {
-	currentUserID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) Collection(w http.ResponseWriter, r *http.Request, currentUserID int64) {
 	if h.DB == nil {
 		response.WriteError(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -53,11 +49,7 @@ func (h Handler) Collection(w http.ResponseWriter, r *http.Request, userID strin
 	}
 }
 
-func (h Handler) Group(w http.ResponseWriter, r *http.Request, userID string) {
-	currentUserID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) Group(w http.ResponseWriter, r *http.Request, currentUserID int64) {
 	groupID, ok := parseGroupID(w, r)
 	if !ok {
 		return
@@ -88,11 +80,7 @@ func (h Handler) Group(w http.ResponseWriter, r *http.Request, userID string) {
 	}
 }
 
-func (h Handler) Members(w http.ResponseWriter, r *http.Request, userID string) {
-	_, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) Members(w http.ResponseWriter, r *http.Request, _ int64) {
 	groupID, ok := parseGroupID(w, r)
 	if !ok {
 		return
@@ -150,11 +138,7 @@ func (h Handler) Members(w http.ResponseWriter, r *http.Request, userID string) 
 	response.WriteJSON(w, http.StatusOK, map[string]any{"members": members})
 }
 
-func (h Handler) Membership(w http.ResponseWriter, r *http.Request, userID string) {
-	currentUserID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) Membership(w http.ResponseWriter, r *http.Request, currentUserID int64) {
 	groupID, ok := parseGroupID(w, r)
 	if !ok {
 		return
@@ -417,15 +401,6 @@ func loadGroup(r *http.Request, db *sql.DB, groupID, currentUserID int64) (model
 		FROM groups g WHERE g.id = ?`, currentUserID, currentUserID, groupID).
 		Scan(&group.ID, &group.CreatorID, &group.Title, &group.Description, &group.MemberCount, &group.IsMember, &group.RequestStatus)
 	return group, err
-}
-
-func parseUserID(w http.ResponseWriter, value string) (int64, bool) {
-	id, err := strconv.ParseInt(value, 10, 64)
-	if err != nil || id <= 0 {
-		response.WriteError(w, "Not logged in", http.StatusUnauthorized)
-		return 0, false
-	}
-	return id, true
 }
 
 func parseGroupID(w http.ResponseWriter, r *http.Request) (int64, bool) {

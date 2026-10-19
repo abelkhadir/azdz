@@ -6,6 +6,7 @@ import (
 	"social-network/internal/middleware"
 	"social-network/internal/models"
 	"social-network/internal/pkg/httpx"
+	"social-network/internal/pkg/repo"
 	"social-network/internal/pkg/response"
 )
 
@@ -37,6 +38,9 @@ func (h Handler) List(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid before ID", http.StatusBadRequest)
 		return
 	}
+	args := []any{ownerID, ownerID, beforeID, beforeID}
+	args = append(args, repo.PostVisibilityArgs(userID)...)
+	args = append(args, limit, limit)
 	rows, err := h.DB.Query(
 		`SELECT p.id, p.user_id, COALESCE(p.title, ''), COALESCE(p.content, ''), COALESCE(p.image_path, ''), p.privacy, p.created_at,
 			u.id, u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, '')
@@ -44,43 +48,10 @@ func (h Handler) List(w http.ResponseWriter, r *http.Request) {
 		WHERE
 			(? = 0 OR p.user_id = ?)
 			AND (? = 0 OR p.id < ?)
-            AND (
-				p.user_id = ?
-				OR p.privacy = 'public'
-				OR (
-					p.privacy = 'followers'
-					AND EXISTS (
-						SELECT 1 FROM follows f
-						WHERE f.follower_id = ?
-						AND f.following_id = p.user_id
-						AND f.status = 'accepted'
-					)
-				)
-				OR (
-					p.privacy = 'private'
-					AND EXISTS (
-						SELECT 1 FROM post_allowed_users pau
-						WHERE pau.post_id = p.id AND pau.user_id = ?
-					)
-					AND EXISTS (
-						SELECT 1 FROM follows f
-						WHERE f.follower_id = ? AND f.following_id = p.user_id
-						AND f.status = 'accepted'
-					)
-				)
-			)
+			AND `+repo.PostVisibilitySQL+`
 		ORDER BY p.id DESC
 		LIMIT CASE WHEN ? > 0 THEN ? ELSE -1 END`,
-		ownerID,
-		ownerID,
-		beforeID,
-		beforeID,
-		userID,
-		userID,
-		userID,
-		userID,
-		limit,
-		limit,
+		args...,
 	)
 	if err != nil {
 		http.Error(w, "Failed to load posts", http.StatusInternalServerError)

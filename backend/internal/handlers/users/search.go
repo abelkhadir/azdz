@@ -20,7 +20,7 @@ type searchResult struct {
 
 // Search returns safe identity summaries for signed-in users. It deliberately
 // never exposes email, birth date, or profile content for private accounts.
-func (h Handler) Search(w http.ResponseWriter, r *http.Request, viewerID string) {
+func (h Handler) Search(w http.ResponseWriter, r *http.Request, viewerID int64) {
 	w.Header().Set("Cache-Control", "no-store")
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)

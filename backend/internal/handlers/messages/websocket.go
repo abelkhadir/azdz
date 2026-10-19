@@ -43,22 +43,13 @@ func (h Handler) handlePrivateMessage(client *websocket.Client, data []byte) {
 		return
 	}
 
-	allowed, err := repo.CanUsersChat(h.DB, client.UserID, request.ReceiverID)
-	if err != nil {
-		log.Println("Failed to check private chat permission:", err)
-		sendMessageError(client, request.ClientID, "Could not verify this conversation.")
-		return
-	}
-	if !allowed {
-		sendMessageError(client, request.ClientID, "You can only message someone when one of you follows the other.")
-		return
-	}
-
 	message := models.PrivateMessage{SenderID: client.UserID, ReceiverID: request.ReceiverID, Content: content}
 	if err := repo.SavePrivateMessage(h.DB, &message); err != nil {
-		if !errors.Is(err, repo.ErrMessageForbidden) {
-			log.Println("Failed to save private message:", err)
+		if errors.Is(err, repo.ErrMessageForbidden) {
+			sendMessageError(client, request.ClientID, "You can only message someone when one of you follows the other.")
+			return
 		}
+		log.Println("Failed to save private message:", err)
 		sendMessageError(client, request.ClientID, "Your message was not sent.")
 		return
 	}
@@ -81,22 +72,13 @@ func (h Handler) handleGroupMessage(client *websocket.Client, data []byte) {
 		return
 	}
 
-	allowed, err := repo.CanUserAccessGroupChat(h.DB, client.UserID, request.GroupID)
-	if err != nil {
-		log.Println("Failed to check group chat permission:", err)
-		sendMessageError(client, request.ClientID, "Could not verify this group.")
-		return
-	}
-	if !allowed {
-		sendMessageError(client, request.ClientID, "Only current group members can send messages here.")
-		return
-	}
-
 	message := models.GroupMessage{GroupID: request.GroupID, SenderID: client.UserID, Content: content}
 	if err := repo.SaveGroupMessage(h.DB, &message); err != nil {
-		if !errors.Is(err, repo.ErrMessageForbidden) {
-			log.Println("Failed to save group message:", err)
+		if errors.Is(err, repo.ErrMessageForbidden) {
+			sendMessageError(client, request.ClientID, "Only current group members can send messages here.")
+			return
 		}
+		log.Println("Failed to save group message:", err)
 		sendMessageError(client, request.ClientID, "Your message was not sent.")
 		return
 	}

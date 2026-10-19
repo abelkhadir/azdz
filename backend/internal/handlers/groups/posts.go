@@ -18,11 +18,7 @@ type groupContentInput struct {
 	Content string `json:"content"`
 }
 
-func (h Handler) Posts(w http.ResponseWriter, r *http.Request, userID string) {
-	memberID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) Posts(w http.ResponseWriter, r *http.Request, memberID int64) {
 	groupID, ok := parseGroupID(w, r)
 	if !ok || !requireMember(w, r, h.DB, groupID, memberID) {
 		return
@@ -99,11 +95,7 @@ func (h Handler) createPost(w http.ResponseWriter, r *http.Request, groupID, use
 	response.WriteJSON(w, http.StatusCreated, map[string]any{"post": post})
 }
 
-func (h Handler) Comments(w http.ResponseWriter, r *http.Request, userID string) {
-	memberID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) Comments(w http.ResponseWriter, r *http.Request, memberID int64) {
 	postID, err := httpx.QueryID(r, "postId")
 	if err != nil {
 		response.WriteError(w, "Invalid post ID", http.StatusBadRequest)

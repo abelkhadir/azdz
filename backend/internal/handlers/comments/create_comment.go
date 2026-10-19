@@ -13,6 +13,7 @@ import (
 	"social-network/internal/models"
 	"social-network/internal/pkg/httpx"
 	"social-network/internal/pkg/imageupload"
+	"social-network/internal/pkg/repo"
 	"social-network/internal/pkg/response"
 )
 
@@ -51,7 +52,7 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allowed, err := canViewPost(h.DB, userID, request.PostID)
+	allowed, err := repo.CanViewPost(h.DB, userID, request.PostID)
 	if err != nil {
 		http.Error(w, "Failed to check post access", http.StatusInternalServerError)
 		return

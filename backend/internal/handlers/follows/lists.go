@@ -18,15 +18,15 @@ type userSummary struct {
 	Avatar    string `json:"avatar"`
 }
 
-func (h Handler) Followers(w http.ResponseWriter, r *http.Request, viewerID string) {
+func (h Handler) Followers(w http.ResponseWriter, r *http.Request, viewerID int64) {
 	h.listRelationships(w, r, viewerID, true)
 }
 
-func (h Handler) Following(w http.ResponseWriter, r *http.Request, viewerID string) {
+func (h Handler) Following(w http.ResponseWriter, r *http.Request, viewerID int64) {
 	h.listRelationships(w, r, viewerID, false)
 }
 
-func (h Handler) listRelationships(w http.ResponseWriter, r *http.Request, viewerID string, followers bool) {
+func (h Handler) listRelationships(w http.ResponseWriter, r *http.Request, viewerID int64, followers bool) {
 	w.Header().Set("Cache-Control", "no-store")
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)

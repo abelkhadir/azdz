@@ -16,7 +16,7 @@ type profile struct {
 	IsPublic bool `json:"isPublic"`
 }
 
-func (h Handler) Profile(w http.ResponseWriter, r *http.Request, viewerID string) {
+func (h Handler) Profile(w http.ResponseWriter, r *http.Request, viewerID int64) {
 	w.Header().Set("Cache-Control", "no-store")
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)
@@ -54,7 +54,7 @@ func (h Handler) Profile(w http.ResponseWriter, r *http.Request, viewerID string
 		response.WriteError(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	isOwnProfile := user.ID == viewerID
+	isOwnProfile := id == viewerID
 	if !user.IsPublic && !isOwnProfile && followStatus != "accepted" {
 		response.WriteJSON(w, http.StatusForbidden, map[string]any{
 			"success": false, "message": "This profile is private",

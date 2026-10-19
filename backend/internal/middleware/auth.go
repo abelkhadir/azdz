@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -15,11 +16,13 @@ func Authenticate(db *sql.DB, next http.Handler) http.Handler {
 			return
 		}
 
-		if _, err := UserIDFromRequest(db, r); err != nil {
+		userID, err := UserIDFromRequest(db, r)
+		if err != nil {
 			response.WriteError(w, "Not logged in", http.StatusUnauthorized)
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), userIDKey{}, userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

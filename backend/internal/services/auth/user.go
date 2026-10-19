@@ -10,17 +10,7 @@ import (
 	"github.com/mattn/go-sqlite3"
 )
 
-var database *sql.DB
-
-func SetDB(db *sql.DB) {
-	database = db
-}
-
 var ErrEmailExists = errors.New("email already registered")
-
-func CreateUser(user models.User) error {
-	return CreateUserWithDB(database, &user)
-}
 
 func CreateUserWithDB(db *sql.DB, user *models.User) error {
 	if db == nil {
@@ -60,40 +50,4 @@ func CreateUserWithDB(db *sql.DB, user *models.User) error {
 	}
 	user.ID = strconv.FormatInt(id, 10)
 	return nil
-}
-func GetUserByEmail(email string) *models.User {
-	if database == nil {
-		return nil
-	}
-
-	var user models.User
-	err := database.QueryRow(
-		`SELECT
-			id,
-			email,
-			password_hash,
-			first_name,
-			last_name,
-			date_of_birth,
-			COALESCE(avatar_path, ''),
-			COALESCE(nickname, ''),
-			COALESCE(about_me, '')
-		FROM users
-		WHERE email = ?`,
-		email,
-	).Scan(
-		&user.ID,
-		&user.Email,
-		&user.PasswordHash,
-		&user.FirstName,
-		&user.LastName,
-		&user.DateOfBirth,
-		&user.Avatar,
-		&user.Nickname,
-		&user.AboutMe,
-	)
-	if err != nil {
-		return nil
-	}
-	return &user
 }

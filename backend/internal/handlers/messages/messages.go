@@ -2,13 +2,13 @@ package messages
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"social-network/internal/middleware"
+	"social-network/internal/pkg/httpx"
 	"social-network/internal/pkg/repo"
+	"social-network/internal/pkg/response"
 	"social-network/internal/websocket"
 )
 
@@ -29,7 +29,7 @@ func (h Handler) History(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	withUserID, err := parseIntQuery(r, "withUserId")
+	withUserID, err := httpx.QueryID(r, "withUserId")
 	if err != nil {
 		http.Error(w, "Invalid withUserId", http.StatusBadRequest)
 		return
@@ -57,7 +57,7 @@ func (h Handler) History(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, history)
+	response.WriteJSON(w, http.StatusOK, history)
 }
 
 func (h Handler) Conversations(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +78,7 @@ func (h Handler) Conversations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, conversations)
+	response.WriteJSON(w, http.StatusOK, conversations)
 }
 
 func (h Handler) GroupHistory(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +93,7 @@ func (h Handler) GroupHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupID, err := parseIntQuery(r, "groupId")
+	groupID, err := httpx.QueryID(r, "groupId")
 	if err != nil {
 		http.Error(w, "Invalid groupId", http.StatusBadRequest)
 		return
@@ -115,37 +115,25 @@ func (h Handler) GroupHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, messages)
-}
-
-func parseIntQuery(r *http.Request, name string) (int64, error) {
-	return strconv.ParseInt(r.URL.Query().Get(name), 10, 64)
+	response.WriteJSON(w, http.StatusOK, messages)
 }
 
 func paginationQuery(r *http.Request) (int, int64, error) {
 	limit := 30
 	if raw := r.URL.Query().Get("limit"); raw != "" {
-		parsed, err := strconv.Atoi(raw)
-		if err != nil || parsed <= 0 {
-			return 0, 0, strconv.ErrSyntax
+		parsed, err := httpx.QueryID(r, "limit")
+		if err != nil {
+			return 0, 0, err
 		}
-		if parsed > 100 {
-			parsed = 100
-		}
-		limit = parsed
+		limit = int(min(parsed, 100))
 	}
 	var beforeID int64
 	if raw := r.URL.Query().Get("beforeId"); raw != "" {
-		parsed, err := strconv.ParseInt(raw, 10, 64)
-		if err != nil || parsed <= 0 {
-			return 0, 0, strconv.ErrSyntax
+		parsed, err := httpx.QueryID(r, "beforeId")
+		if err != nil {
+			return 0, 0, err
 		}
 		beforeID = parsed
 	}
 	return limit, beforeID, nil
-}
-
-func writeJSON(w http.ResponseWriter, value any) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(value)
 }

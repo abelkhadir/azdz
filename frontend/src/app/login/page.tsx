@@ -16,7 +16,7 @@ export default function LoginPage() {
         method: 'POST',
         body: JSON.stringify({ email: form.get('email'), password: form.get('password') }),
       })
-      window.location.href = '/'
+      window.location.href = '/feed'
     } catch (error) {
       setStatus({ busy: false, error: errorMessage(error) })
     }

@@ -17,7 +17,6 @@ import (
 	"social-network/internal/handlers/users"
 	"social-network/internal/middleware"
 	"social-network/internal/pkg/db"
-	authservice "social-network/internal/services/auth"
 	"social-network/internal/websocket"
 )
 
@@ -45,7 +44,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer database.Close()
-	authservice.SetDB(database)
 
 	port := os.Getenv("PORT")
 	if port == "" {

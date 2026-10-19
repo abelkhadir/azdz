@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strconv"
 
 	"social-network/internal/models"
 	"social-network/internal/pkg/repo"
@@ -14,7 +13,7 @@ import (
 )
 
 // Requests lists only the pending requests addressed to the authenticated user.
-func (h Handler) Requests(w http.ResponseWriter, r *http.Request, userID string) {
+func (h Handler) Requests(w http.ResponseWriter, r *http.Request, userID int64) {
 	w.Header().Set("Cache-Control", "no-store")
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)
@@ -34,7 +33,7 @@ func (h Handler) Requests(w http.ResponseWriter, r *http.Request, userID string)
 }
 
 // DecideRequest changes only a pending request belonging to the recipient.
-func (h Handler) DecideRequest(w http.ResponseWriter, r *http.Request, userID string) {
+func (h Handler) DecideRequest(w http.ResponseWriter, r *http.Request, userID int64) {
 	w.Header().Set("Cache-Control", "no-store")
 	if r.Method != http.MethodPut && r.Method != http.MethodDelete {
 		w.Header().Set("Allow", "PUT, DELETE")
@@ -80,9 +79,8 @@ func (h Handler) DecideRequest(w http.ResponseWriter, r *http.Request, userID st
 	}
 	var notification models.Notification
 	if status == "accepted" {
-		actorID, _ := strconv.ParseInt(userID, 10, 64)
 		notification = models.Notification{
-			UserID: id, ActorID: actorID, Type: models.NotificationFollowAccepted,
+			UserID: id, ActorID: userID, Type: models.NotificationFollowAccepted,
 			EntityType: "profile", Content: "Your follow request was accepted.",
 		}
 		if err := repo.CreateNotification(tx, &notification); err != nil {
@@ -98,8 +96,7 @@ func (h Handler) DecideRequest(w http.ResponseWriter, r *http.Request, userID st
 		if notification.ID != 0 {
 			websocket.SendNotification(h.WebSocket, notification)
 		}
-		actorID, _ := strconv.ParseInt(userID, 10, 64)
-		websocket.SendEventToUser(h.WebSocket, actorID, "notifications_read", nil)
+		websocket.SendEventToUser(h.WebSocket, userID, "notifications_read", nil)
 	}
 	response.WriteJSON(w, http.StatusOK, map[string]any{"success": true, "followStatus": status})
 }

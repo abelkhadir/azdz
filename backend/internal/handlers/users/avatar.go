@@ -9,7 +9,7 @@ import (
 )
 
 // Avatar applies the same visibility rules as profile information.
-func (h Handler) Avatar(w http.ResponseWriter, r *http.Request, viewerID string) {
+func (h Handler) Avatar(w http.ResponseWriter, r *http.Request, viewerID int64) {
 	if r.Method != http.MethodGet {
 		response.WriteError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

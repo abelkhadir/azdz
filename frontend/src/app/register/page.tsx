@@ -12,7 +12,7 @@ export default function RegisterPage() {
     setStatus({ busy: true, error: '' })
     try {
       await request('/api/auth/register', { method: 'POST', body: new FormData(event.currentTarget) })
-      window.location.href = '/'
+      window.location.href = '/feed'
     } catch (error) {
       setStatus({ busy: false, error: errorMessage(error) })
     }

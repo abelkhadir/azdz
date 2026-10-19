@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -13,9 +12,15 @@ import (
 
 var ErrInvalidSession = errors.New("invalid session")
 
+type userIDKey struct{}
+
 // UserIDFromRequest returns the user authenticated by the session cookie.
 // Client-provided IDs must never be used for authorization.
 func UserIDFromRequest(db *sql.DB, r *http.Request) (int64, error) {
+	if userID, ok := r.Context().Value(userIDKey{}).(int64); ok && userID > 0 {
+		return userID, nil
+	}
+
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
 		return 0, ErrInvalidSession
@@ -56,13 +61,13 @@ func CheckSession(db *sql.DB, token string) (Session, error) {
 }
 
 // RequireSession passes the verified user's ID to the protected handler.
-func RequireSession(db *sql.DB, next func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+func RequireSession(db *sql.DB, next func(http.ResponseWriter, *http.Request, int64)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := UserIDFromRequest(db, r)
 		if err != nil {
 			response.WriteError(w, "Not logged in", http.StatusUnauthorized)
 			return
 		}
-		next(w, r, strconv.FormatInt(userID, 10))
+		next(w, r, userID)
 	}
 }

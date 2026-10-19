@@ -24,11 +24,7 @@ type eventInput struct {
 }
 
 // Events creates a group event and notifies every other group member.
-func (h Handler) Events(w http.ResponseWriter, r *http.Request, userID string) {
-	currentUserID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) Events(w http.ResponseWriter, r *http.Request, currentUserID int64) {
 	groupID, ok := parseGroupID(w, r)
 	if !ok {
 		return
@@ -180,11 +176,7 @@ func (h Handler) listEvents(w http.ResponseWriter, r *http.Request, currentUserI
 	response.WriteJSON(w, http.StatusOK, map[string]any{"events": events})
 }
 
-func (h Handler) RespondToEvent(w http.ResponseWriter, r *http.Request, userID string) {
-	currentUserID, ok := parseUserID(w, userID)
-	if !ok {
-		return
-	}
+func (h Handler) RespondToEvent(w http.ResponseWriter, r *http.Request, currentUserID int64) {
 	if r.Method != http.MethodPut {
 		w.Header().Set("Allow", "PUT")
 		response.WriteError(w, "Method not allowed", http.StatusMethodNotAllowed)

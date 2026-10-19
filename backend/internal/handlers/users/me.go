@@ -11,7 +11,7 @@ import (
 	"social-network/internal/pkg/response"
 )
 
-func (h Handler) Me(w http.ResponseWriter, r *http.Request, userID string) {
+func (h Handler) Me(w http.ResponseWriter, r *http.Request, userID int64) {
 	w.Header().Set("Cache-Control", "no-store")
 	if r.Method != http.MethodGet && r.Method != http.MethodPatch {
 		w.Header().Set("Allow", "GET, PATCH")
@@ -44,7 +44,7 @@ func (h Handler) Me(w http.ResponseWriter, r *http.Request, userID string) {
 	response.WriteJSON(w, http.StatusOK, map[string]any{"success": true, "user": user})
 }
 
-func (h Handler) updateVisibility(w http.ResponseWriter, r *http.Request, userID string) bool {
+func (h Handler) updateVisibility(w http.ResponseWriter, r *http.Request, userID int64) bool {
 	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || mediaType != "application/json" {
 		response.WriteError(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
