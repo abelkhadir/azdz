@@ -75,16 +75,13 @@ func (h Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if avatarURL != "" {
 		defer func() {
 			if user.ID == "" {
-				avatar.Remove(avatarURL)
+				if err := avatar.Remove(avatarURL); err != nil {
+					log.Println("Error removing avatar:", err)
+				}
 			}
 		}()
 	}
 	if err := authservice.CreateUserWithDB(h.DB, &user); err != nil {
-		if avatarURL != "" {
-			if removeErr := avatar.Remove(avatarURL); removeErr != nil {
-				log.Println("Error removing avatar:", removeErr)
-			}
-		}
 		if errors.Is(err, authservice.ErrEmailExists) {
 			response.WriteError(w, "Email is already registered", http.StatusConflict)
 			return

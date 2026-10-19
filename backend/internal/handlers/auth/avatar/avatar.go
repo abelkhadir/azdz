@@ -1,12 +1,12 @@
 package avatar
 
 import (
-	"bytes"
-	"io"
+	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
 
+	"social-network/internal/pkg/imageupload"
 	"social-network/internal/pkg/response"
 )
 
@@ -29,45 +29,16 @@ func Save(w http.ResponseWriter, r *http.Request) (string, bool) {
 		return "", false
 	}
 
-	// Check the file content.
-	buf := make([]byte, 512)
-	n, err := file.Read(buf)
-	if err != nil && err != io.EOF {
-		response.WriteError(w, "Failed to read avatar", http.StatusBadRequest)
-		return "", false
-	}
-	var ext string
-	switch http.DetectContentType(buf[:n]) {
-	case "image/jpeg":
-		ext = ".jpg"
-	case "image/png":
-		ext = ".png"
-	case "image/gif":
-		ext = ".gif"
-	default:
-		response.WriteError(w, "Only JPEG, PNG and GIF images are allowed", http.StatusBadRequest)
-		return "", false
-	}
-
-	if err := os.MkdirAll(avatarDir, 0755); err != nil {
-		response.WriteError(w, "Something went wrong with avatar upload", http.StatusInternalServerError)
-		return "", false
-	}
-	// CreateTemp generates a unique name and never overwrites an existing file.
-	dst, err := os.CreateTemp(avatarDir, "avatar-*"+ext)
+	_, url, err := imageupload.Save(file, avatarDir, "/uploads/avatars")
 	if err != nil {
-		response.WriteError(w, "Something went wrong with avatar upload", http.StatusInternalServerError)
+		if errors.Is(err, imageupload.ErrInvalidImage) {
+			response.WriteError(w, err.Error(), http.StatusBadRequest)
+		} else {
+			response.WriteError(w, "Something went wrong with avatar upload", http.StatusInternalServerError)
+		}
 		return "", false
 	}
-	reader := io.MultiReader(bytes.NewReader(buf[:n]), file)
-	_, copyErr := io.Copy(dst, reader)
-	closeErr := dst.Close()
-	if copyErr != nil || closeErr != nil {
-		os.Remove(dst.Name())
-		response.WriteError(w, "Something went wrong with avatar upload", http.StatusInternalServerError)
-		return "", false
-	}
-	return "/uploads/avatars/" + filepath.Base(dst.Name()), true
+	return url, true
 }
 
 // Remove deletes a saved avatar using its image URL.

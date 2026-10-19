@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -16,6 +17,8 @@ import (
 
 const maxImageBytes = 5 << 20
 
+var ErrInvalidImage = errors.New("invalid image")
+
 // Save validates the image contents and stores it under a random name.
 func Save(file io.Reader, directory, publicPrefix string) (string, string, error) {
 	data, err := io.ReadAll(io.LimitReader(file, maxImageBytes+1))
@@ -23,20 +26,20 @@ func Save(file io.Reader, directory, publicPrefix string) (string, string, error
 		return "", "", err
 	}
 	if len(data) == 0 || len(data) > maxImageBytes {
-		return "", "", errors.New("image must be between 1 byte and 5 MB")
+		return "", "", fmt.Errorf("%w: image must be between 1 byte and 5 MB", ErrInvalidImage)
 	}
 
 	config, format, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
-		return "", "", errors.New("invalid image file")
+		return "", "", fmt.Errorf("%w: only valid JPEG, PNG and GIF images are allowed", ErrInvalidImage)
 	}
 	if config.Width <= 0 || config.Height <= 0 || config.Width > 10000 || config.Height > 10000 {
-		return "", "", errors.New("image dimensions are not allowed")
+		return "", "", fmt.Errorf("%w: image dimensions are not allowed", ErrInvalidImage)
 	}
 	extensions := map[string]string{"jpeg": ".jpg", "png": ".png", "gif": ".gif"}
 	extension, ok := extensions[format]
 	if !ok {
-		return "", "", errors.New("unsupported image format")
+		return "", "", fmt.Errorf("%w: unsupported image format", ErrInvalidImage)
 	}
 
 	randomName := make([]byte, 16)
